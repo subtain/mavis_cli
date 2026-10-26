@@ -1,7 +1,6 @@
-.har
-.env
 .venv/
 __pycache__/
 *.py[cod]
 copilot-context.json
 copilot-context.md
+*.har

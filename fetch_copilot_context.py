@@ -143,24 +143,28 @@ class Config:
     max_output_bytes: int
 
     @classmethod
-    def load(cls) -> "Config":
+    def load(cls, require_api: bool = True) -> "Config":
         flow = env("OAUTH_FLOW", "auto").lower()
         if flow not in {"auto", "device", "authorization_code_pkce", "client_credentials"}:
             raise ConfigurationError(
                 "OAUTH_FLOW must be auto, device, authorization_code_pkce, "
                 "or client_credentials"
             )
-        endpoints = tuple(
-            item.strip() for item in required("API_ENDPOINTS").split(",") if item.strip()
-        )
-        if not endpoints:
+        api_base_url = env("API_BASE_URL", env("MAVIS_API_BASE_URL"))
+        if require_api:
+            api_base_url = required("API_BASE_URL")
+            endpoint_value = required("API_ENDPOINTS")
+        else:
+            endpoint_value = env("API_ENDPOINTS")
+        endpoints = tuple(item.strip() for item in endpoint_value.split(",") if item.strip())
+        if require_api and not endpoints:
             raise ConfigurationError("API_ENDPOINTS must contain at least one endpoint")
         fields = tuple(
             item.strip() for item in env("CONTEXT_FIELDS").split(",") if item.strip()
         )
         return cls(
             provider_name=required("PROVIDER_NAME"),
-            api_base_url=required("API_BASE_URL").rstrip("/"),
+            api_base_url=api_base_url.rstrip("/"),
             endpoints=endpoints,
             client_id=required("OAUTH_CLIENT_ID"),
             client_secret=env("OAUTH_CLIENT_SECRET"),
